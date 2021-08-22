@@ -13,10 +13,21 @@
 (defonce items (r/atom (sorted-map)))
 (defonce counter (r/atom 0))
 
+(defn path-string []
+  (for [all-items (vals @items)]
+    (let [{:keys [item price]} all-items]
+      (str item "=" price))))
+
+(defn update-url-params []
+  (let [current-href (.-href js/window.location)
+        path-strings (path-string)
+        full-path-string (str "?" (apply str (interpose "&" (seq path-strings))))]
+    (.replaceState js/window.history nil nil full-path-string)))
+
 (defn add-item [item price]
   (let [id (swap! counter inc)]
-    (swap! items assoc id {:id id :item item :price (js/parseInt price)})))
-
+    (swap! items assoc id {:id id :item item :price (js/parseInt price)})
+    (update-url-params)))
 
 (defn parse-params
   "Parse URL parameters into a hashmap. https://gist.github.com/kordano/56a16e1b28d706557f54"
@@ -70,7 +81,7 @@
 (defn bille []
   (let [all-items (vals @items)]
     [:div
-     [:h1 "Bille!!"]
+     [:h1 [:a {:href ""} "Bille!!"]]
      [:div.pair.row
        [item-input]
        [price-input]]
@@ -89,7 +100,6 @@
        [:tr [:td "TOTAL"] [:td (reduce + (map :price (vals @items)))]]]]
      [show-time]
      [:hr]]))
-     ;[:p (js/decodeURI (-> js/window .-location .-search))]]))
 
 
 (defn home-page []
